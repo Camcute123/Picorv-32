@@ -6,7 +6,9 @@
 // means.
 
 `timescale 1 ns / 1 ps
-
+`ifndef BARREL
+`define BARREL 0
+`endif
 `ifndef VERILATOR
 module testbench #(
 	parameter AXI_TEST = 0,
@@ -169,6 +171,7 @@ module picorv32_wrapper #(
 		.COMPRESSED_ISA(1),
 `endif
 		.ENABLE_MUL(1),
+		.BARREL_SHIFTER(`BARREL),
 		.ENABLE_DIV(1),
 		.ENABLE_IRQ(1),
 		.ENABLE_TRACE(1)
@@ -346,6 +349,7 @@ module axi4_memory #(
 				{fast_axi_transaction, async_axi_transaction, delay_axi_transaction} <= xorshift64_state;
 		end
 	end
+	
 
 	reg latched_raddr_en = 0;
 	reg latched_waddr_en = 0;
