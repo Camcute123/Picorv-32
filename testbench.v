@@ -254,13 +254,17 @@ module picorv32_wrapper #(
 	end
 
 	integer cycle_counter;
+	integer instruction_counter;
 	always @(posedge clk) begin
 		cycle_counter <= resetn ? cycle_counter + 1 : 0;
+		instruction_counter <= resetn ? (instruction_counter + (trace_valid ? 1 : 0)) : 0;
 		if (resetn && trap) begin
 `ifndef VERILATOR
 			repeat (10) @(posedge clk);
 `endif
 			$display("TRAP after %1d clock cycles", cycle_counter);
+			$display("Instructions passed: %1d",instruction_counter);
+			$display("CPI: %f", $itor(cycle_counter) / $itor(instruction_counter));
 			if (tests_passed) begin
 				$display("ALL TESTS PASSED.");
 				$finish;
