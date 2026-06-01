@@ -108,6 +108,16 @@ module picosoc (
 
 	reg ram_ready;
 	wire [31:0] ram_rdata;
+	// Adding a read buffer register
+	reg        readbuf_valid; // any valid data in buffer
+	////////////////////////////////////////////////
+	reg [31:0] readbuf_addr; //from which memory address
+	reg [31:0] readbuf_data; //the data from the lastRAM
+	////////////////////////////////////////////////
+
+	//hit detection
+	wire readbuf_hit = readbuf_valid && mem_valid && (mem_wstrb == 4'b0000) && (mem_addr == readbuf_addr);
+
 
 	assign iomem_valid = mem_valid && (mem_addr[31:24] > 8'h 01);
 	assign iomem_wstrb = mem_wstrb;
@@ -123,13 +133,16 @@ module picosoc (
 	wire        simpleuart_reg_dat_sel = mem_valid && (mem_addr == 32'h 0200_0008);
 	wire [31:0] simpleuart_reg_dat_do;
 	wire        simpleuart_reg_dat_wait;
-
-	assign mem_ready = (iomem_valid && iomem_ready) || spimem_ready || ram_ready || spimemio_cfgreg_sel ||
+	////////////////////////////////////////////////
+	// Original: be ready when RAM/Flash/UART/GPIO complete --> readbuf_hit when read buffer is hitten, memory access is completed 
+	// so CPU do not have to wait for ram_ready
+	assign mem_ready = readbuf_hit || (iomem_valid && iomem_ready) || spimem_ready || ram_ready || spimemio_cfgreg_sel ||
 			simpleuart_reg_div_sel || (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
-
-	assign mem_rdata = (iomem_valid && iomem_ready) ? iomem_rdata : spimem_ready ? spimem_rdata : ram_ready ? ram_rdata :
+	// mem_rdata is the final data CPU got. If buffer hit, give the data in buffer firectly to CPU
+	assign mem_rdata = readbuf_hit ? readbuf_data : (iomem_valid && iomem_ready) ? iomem_rdata : spimem_ready ? spimem_rdata : ram_ready ? ram_rdata :
 			spimemio_cfgreg_sel ? spimemio_cfgreg_do : simpleuart_reg_div_sel ? simpleuart_reg_div_do :
 			simpleuart_reg_dat_sel ? simpleuart_reg_dat_do : 32'h 0000_0000;
+	////////////////////////////////////////////////
 
 	picorv32 #(
 		.STACKADDR(STACKADDR),
@@ -204,9 +217,30 @@ module picosoc (
 		.reg_dat_do  (simpleuart_reg_dat_do),
 		.reg_dat_wait(simpleuart_reg_dat_wait)
 	);
-
-	always @(posedge clk)
-		ram_ready <= mem_valid && !mem_ready && mem_addr < 4*MEM_WORDS;
+	////////////////////////////////////////////////
+	// Useful if read the same address continuously 
+	always @(posedge clk) begin
+		if (!resetn) begin
+			// buffer is empty during reset
+			ram_ready <= 0;
+			readbuf_valid <= 0;
+        	readbuf_addr <= 0;
+        	readbuf_data <= 0;
+		end else begin
+			ram_ready <= mem_valid && !mem_ready && mem_addr < 4*MEM_WORDS;
+			// RAM read --> store the data into buffer
+			if (ram_ready && mem_wstrb == 4'b0000) begin
+				readbuf_valid <= 1;
+				readbuf_addr <= mem_addr; // save current address
+				readbuf_data <= ram_rdata; // save current data
+			end
+			// is write is triggered
+			if (mem_valid && mem_wstrb != 4'b0000) begin
+				readbuf_valid <= 0;
+			end
+		end
+	end
+	///////////////////////////////////////////////////
 
 	`PICOSOC_MEM #(
 		.WORDS(MEM_WORDS)

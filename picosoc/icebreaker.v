@@ -44,13 +44,34 @@ module icebreaker (
 	inout  flash_io1,
 	inout  flash_io2,
 	inout  flash_io3
+
+	
 );
 	parameter integer MEM_WORDS = 32768;
+	///////////////////////////////////////////
+	wire clk_16mhz;
+	wire pll_locked;
+
+	SB_PLL40_CORE #(
+    .FEEDBACK_PATH("SIMPLE"),
+    .PLLOUT_SELECT("GENCLK"),
+    .DIVR(4'b0000),  //input divider
+    .DIVF(7'b1010100), //feedback mutiplier
+    .DIVQ(3'b110), //Output divider
+    .FILTER_RANGE(3'b001)
+	) pll (
+    .RESETB(1'b1),
+    .BYPASS(1'b0),
+    .PLLOUTCORE(clk_16mhz),
+    .LOCK(pll_locked),
+    .REFERENCECLK(clk)
+	);
+	/////////////////////////////////////
 
 	reg [5:0] reset_cnt = 0;
 	wire resetn = &reset_cnt;
 
-	always @(posedge clk) begin
+	always @(posedge clk_16mhz) begin
 		reset_cnt <= reset_cnt + !resetn;
 	end
 
@@ -90,7 +111,7 @@ module icebreaker (
 	reg [31:0] gpio;
 	assign leds = gpio;
 
-	always @(posedge clk) begin
+	always @(posedge clk_16mhz) begin
 		if (!resetn) begin
 			gpio <= 0;
 		end else begin
@@ -107,14 +128,14 @@ module icebreaker (
 	end
 
 	picosoc #(
-		.BARREL_SHIFTER(0),
-		.ENABLE_MUL(0),
+		.BARREL_SHIFTER(1), // enable the barrel shifter
+		.ENABLE_MUL(1), // enable the multiplier
 		.ENABLE_DIV(0),
 		.ENABLE_FAST_MUL(1),
 		.MEM_WORDS(MEM_WORDS)
 	) soc (
-		.clk          (clk         ),
-		.resetn       (resetn      ),
+		.clk          (clk_16mhz   ),
+		.resetn       (resetn & pll_locked),
 
 		.ser_tx       (ser_tx      ),
 		.ser_rx       (ser_rx      ),
