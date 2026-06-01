@@ -6,9 +6,11 @@
 // means.
 
 `timescale 1 ns / 1 ps
+//defining barrel shifter for test
 `ifndef BARREL
 `define BARREL 0
 `endif
+//
 `ifndef VERILATOR
 module testbench #(
 	parameter AXI_TEST = 0,
@@ -171,10 +173,11 @@ module picorv32_wrapper #(
 		.COMPRESSED_ISA(1),
 `endif
 		.ENABLE_MUL(1),
-		.BARREL_SHIFTER(`BARREL),
+		.BARREL_SHIFTER(`BARREL), //added
 		.ENABLE_DIV(1),
 		.ENABLE_IRQ(1),
 		.ENABLE_TRACE(1)
+		
 `endif
 	) uut (
 		.clk            (clk            ),
@@ -257,17 +260,13 @@ module picorv32_wrapper #(
 	end
 
 	integer cycle_counter;
-	integer instruction_counter;
 	always @(posedge clk) begin
 		cycle_counter <= resetn ? cycle_counter + 1 : 0;
-		instruction_counter <= resetn ? (instruction_counter + (trace_valid ? 1 : 0)) : 0;
 		if (resetn && trap) begin
 `ifndef VERILATOR
 			repeat (10) @(posedge clk);
 `endif
 			$display("TRAP after %1d clock cycles", cycle_counter);
-			$display("Instructions passed: %1d",instruction_counter);
-			$display("CPI: %f", $itor(cycle_counter) / $itor(instruction_counter));
 			if (tests_passed) begin
 				$display("ALL TESTS PASSED.");
 				$finish;
@@ -349,7 +348,6 @@ module axi4_memory #(
 				{fast_axi_transaction, async_axi_transaction, delay_axi_transaction} <= xorshift64_state;
 		end
 	end
-	
 
 	reg latched_raddr_en = 0;
 	reg latched_waddr_en = 0;

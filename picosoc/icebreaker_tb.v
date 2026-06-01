@@ -26,6 +26,19 @@ module testbench;
 	localparam ser_half_period = 53;
 	event ser_sample;
 
+
+	// Count read-buffer hits vs misses on the SoC clock to measure how often the read buffer serves a read instantly instead of going to RAM.
+	integer readbuf_hits  = 0;
+	integer ram_read_miss = 0;
+
+	always @(posedge uut.clk_16mhz) begin
+		if (uut.soc.readbuf_hit)
+			readbuf_hits <= readbuf_hits + 1;
+		if (uut.soc.ram_ready && (uut.soc.mem_wstrb == 4'b0000))
+			ram_read_miss <= ram_read_miss + 1;
+	end
+	//
+
 	initial begin
 		$dumpfile("testbench.vcd");
 		$dumpvars(0, testbench);
@@ -34,6 +47,14 @@ module testbench;
 			repeat (50000) @(posedge clk);
 			$display("+50000 cycles");
 		end
+
+	//ouputs
+		$display("READ BUFFER");
+		$display("read-buffer hits : %0d", readbuf_hits);
+		$display("RAM read misses  : %0d", ram_read_miss);
+		$display("total RAM reads  : %0d", readbuf_hits + ram_read_miss);
+		if (readbuf_hits + ram_read_miss > 0)
+			$display("hit rate         : %0d %%", (100*readbuf_hits)/(readbuf_hits + ram_read_miss));
 		$finish;
 	end
 
