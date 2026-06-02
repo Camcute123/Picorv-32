@@ -77,7 +77,7 @@ module icebreaker (
 
 	wire [7:0] leds;
 
-	assign led1 = leds[1];
+	assign led1 = clk_16mhz;
 	assign led2 = leds[2];
 	assign led3 = leds[3];
 	assign led4 = leds[4];
