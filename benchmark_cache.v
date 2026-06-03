@@ -26,6 +26,11 @@ wire flash_io1_do;
 wire flash_io2_do;
 wire flash_io3_do;
 
+wire flash_io0 = flash_io0_oe ? flash_io0_do : 1'bz;
+wire flash_io1 = flash_io1_oe ? flash_io1_do : 1'bz;
+wire flash_io2 = flash_io2_oe ? flash_io2_do : 1'bz;
+wire flash_io3 = flash_io3_oe ? flash_io3_do : 1'bz;
+
 integer cycle_count;
 integer ram_access_count;
 integer readbuf_hit_count;
@@ -63,10 +68,10 @@ picosoc dut (
     .flash_io2_do(flash_io2_do),
     .flash_io3_do(flash_io3_do),
 
-    .flash_io0_di(1'b0),
-    .flash_io1_di(1'b0),
-    .flash_io2_di(1'b0),
-    .flash_io3_di(1'b0)
+    .flash_io0_di(flash_io0),
+    .flash_io1_di(flash_io1),
+    .flash_io2_di(flash_io2),
+    .flash_io3_di(flash_io3)
 );
 
 always @(posedge clk) begin
