@@ -23,6 +23,17 @@ module testbench;
 	reg clk;
 	always #5 clk = (clk === 1'b0);
 
+	// --- Simulation-only PLL bypass (does not modify icebreaker.v) ---
+	// On real hardware icebreaker.v uses SB_PLL40_CORE to make clk_16mhz.
+	// In simulation that primitive has an empty body, so clk_16mhz and
+	// pll_locked are never driven and the whole SoC stays frozen. We force
+	// them here from the testbench: drive the SoC clock from clk and hold
+	// the PLL "locked" so reset can release. This only affects simulation.
+	initial begin
+		force uut.clk_16mhz  = clk;
+		force uut.pll_locked = 1'b1;
+	end
+	//
 	localparam ser_half_period = 53;
 	event ser_sample;
 
@@ -31,7 +42,7 @@ module testbench;
 	integer readbuf_hits  = 0;
 	integer ram_read_miss = 0;
 
-	always @(posedge uut.clk_16mhz) begin
+	always @(posedge clk) begin
 		if (uut.soc.readbuf_hit)
 			readbuf_hits <= readbuf_hits + 1;
 		if (uut.soc.ram_ready && (uut.soc.mem_wstrb == 4'b0000))
