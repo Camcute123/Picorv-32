@@ -688,6 +688,21 @@ void main()
 	print(" KiB\n");
 	print("\n");
 
+	// Cache benchmark 1: repeated read from same address (high hit rate expected)
+	volatile int *p = (volatile int *)0x100;
+	volatile int sum = 0;
+	for (int i = 0; i < 1000; i++) {
+		sum += *p;
+	}
+	print("Benchmark 1 done (repeated same address)\n");
+
+	// Cache benchmark 2: read different addresses (low hit rate expected)
+	volatile int array[64];
+	for (int i = 0; i < 1000; i++) {
+		sum += array[i % 64];
+	}
+	print("Benchmark 2 done (strided access)\n");
+
 	//cmd_memtest(); // test overwrites bss and data memory
 	print("\n");
 

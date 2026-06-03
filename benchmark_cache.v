@@ -92,7 +92,7 @@ initial begin
     #100;
     resetn = 1;
 
-    #5000;
+    #5000000;
 
     $display("===== Cache Benchmark Result =====");
     $display("Cycles           = %0d", cycle_count);
@@ -101,5 +101,14 @@ initial begin
 
     $finish;
 end
+
+spiflash spiflash (
+    .csb(flash_csb),
+    .clk(flash_clk),
+    .io0(flash_io0_do),
+    .io1(flash_io1_di),
+    .io2(flash_io2_di),
+    .io3(flash_io3_di)
+);
 
 endmodule
