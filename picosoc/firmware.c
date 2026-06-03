@@ -668,6 +668,23 @@ void main()
 	reg_leds = 31;
 	reg_uart_clkdiv = 104;
 	print("Booting..\n");
+	
+	//Test added BEFORE Enter button needed to run via simulation.
+
+	// Cache benchmark 1: repeated read from same address (high hit rate expected)
+	volatile int *p = (volatile int *)0x100;
+	volatile int sum = 0;
+	for (int i = 0; i < 1000; i++) {
+		sum += *p;
+	}
+	print("Benchmark 1 done (repeated same address)\n");
+
+	// Cache benchmark 2: read different addresses (low hit rate expected)
+	volatile int array[64];
+	for (int i = 0; i < 1000; i++) {
+		sum += array[i % 64];
+	}
+	print("Benchmark 2 done (strided access)\n");
 
 	reg_leds = 63;
 	set_flash_qspi_flag();
@@ -688,20 +705,6 @@ void main()
 	print(" KiB\n");
 	print("\n");
 
-	// Cache benchmark 1: repeated read from same address (high hit rate expected)
-	volatile int *p = (volatile int *)0x100;
-	volatile int sum = 0;
-	for (int i = 0; i < 1000; i++) {
-		sum += *p;
-	}
-	print("Benchmark 1 done (repeated same address)\n");
-
-	// Cache benchmark 2: read different addresses (low hit rate expected)
-	volatile int array[64];
-	for (int i = 0; i < 1000; i++) {
-		sum += array[i % 64];
-	}
-	print("Benchmark 2 done (strided access)\n");
 
 	//cmd_memtest(); // test overwrites bss and data memory
 	print("\n");

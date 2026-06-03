@@ -97,7 +97,7 @@ initial begin
     #100;
     resetn = 1;
 
-    #5000000;
+    #50000;
 
     $display("===== Cache Benchmark Result =====");
     $display("Cycles           = %0d", cycle_count);
