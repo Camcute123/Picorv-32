@@ -1247,7 +1247,7 @@ module picorv32 #(
 			add_result = {1'b0, reg_op1} + {1'b0, (instr_sub ? ~reg_op2 : reg_op2)} + {32'b0, instr_sub};
 			alu_add_sub = add_result[31:0];
 			alu_ltu     = !add_result[32];
-			alu_lts     = add_result[31] ^ (reg_op1[31] ^ reg_op2[31]);
+			alu_lts     = $signed(reg_op1) < $signed(reg_op2);
 			alu_eq      = (reg_op1 == reg_op2);
 			alu_shl = reg_op1 << reg_op2[4:0];
 			alu_shr = $signed({instr_sra || instr_srai ? reg_op1[31] : 1'b0, reg_op1}) >>> reg_op2[4:0];
