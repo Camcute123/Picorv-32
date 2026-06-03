@@ -11,6 +11,13 @@
 `define BARREL 0
 `endif
 //
+//2cycleparam
+`ifndef TWO_CYCLE_ALU
+`define TWO_CYCLE_ALU 0
+`endif
+//
+
+
 `ifndef VERILATOR
 module testbench #(
 	parameter AXI_TEST = 0,
@@ -176,7 +183,9 @@ module picorv32_wrapper #(
 		.BARREL_SHIFTER(`BARREL), //added
 		.ENABLE_DIV(1),
 		.ENABLE_IRQ(1),
-		.ENABLE_TRACE(1)
+		.ENABLE_TRACE(1),
+		.TWO_CYCLE_ALU(`TC_ALU) //added
+
 		
 `endif
 	) uut (
