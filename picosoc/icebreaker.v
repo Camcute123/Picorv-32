@@ -128,10 +128,11 @@ module icebreaker (
 	end
 
 	picosoc #(
-		.BARREL_SHIFTER(1), // enable the barrel shifter
-		.ENABLE_MUL(1), // enable the multiplier
-		.ENABLE_DIV(0),
-		.ENABLE_FAST_MUL(1),
+		.BARREL_SHIFTER(1), //barrel shifter enabled
+		.ENABLE_MUL(1),
+		.ENABLE_DIV(1),
+		.ENABLE_FAST_MUL(0),
+		.ENABLE_MACC(1), //macc enabled
 		.MEM_WORDS(MEM_WORDS)
 	) soc (
 		.clk          (clk_16mhz   ),
