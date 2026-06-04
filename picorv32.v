@@ -76,6 +76,7 @@ module picorv32 #(
 	parameter [ 0:0] ENABLE_MUL = 0,
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 0,
+	parameter [ 0:0] ENABLE_MACC = 0,
 	parameter [ 0:0] ENABLE_IRQ = 0,
 	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
 	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
@@ -166,7 +167,7 @@ module picorv32 #(
 	localparam integer regfile_size = (ENABLE_REGS_16_31 ? 32 : 16) + 4*ENABLE_IRQ*ENABLE_IRQ_QREGS;
 	localparam integer regindex_bits = (ENABLE_REGS_16_31 ? 5 : 4) + ENABLE_IRQ*ENABLE_IRQ_QREGS;
 
-	localparam WITH_PCPI = ENABLE_PCPI || ENABLE_MUL || ENABLE_FAST_MUL || ENABLE_DIV;
+	localparam WITH_PCPI = ENABLE_PCPI || ENABLE_MUL || ENABLE_FAST_MUL || ENABLE_DIV || ENABLE_MACC; // mac enable added
 
 	localparam [35:0] TRACE_BRANCH = {4'b 0001, 32'b 0};
 	localparam [35:0] TRACE_ADDR   = {4'b 0010, 32'b 0};
@@ -264,6 +265,12 @@ module picorv32 #(
 	wire        pcpi_div_wait;
 	wire        pcpi_div_ready;
 
+ // mac signals added for benchmarking
+	wire        pcpi_macc_wr;
+	wire [31:0] pcpi_macc_rd;
+	wire        pcpi_macc_wait;
+	wire        pcpi_macc_ready;
+
 	reg        pcpi_int_wr;
 	reg [31:0] pcpi_int_rd;
 	reg        pcpi_int_wait;
@@ -322,11 +329,34 @@ module picorv32 #(
 		assign pcpi_div_ready = 0;
 	end endgenerate
 
+// mac core added for benchmarking
+	generate if (ENABLE_MACC) begin
+		picorv32_pcpi_macc pcpi_macc (
+			.clk       (clk            ),
+			.resetn    (resetn         ),
+			.pcpi_valid(pcpi_valid     ),
+			.pcpi_insn (pcpi_insn      ),
+			.pcpi_rs1  (pcpi_rs1       ),
+			.pcpi_rs2  (pcpi_rs2       ),
+			.pcpi_wr   (pcpi_macc_wr   ),
+			.pcpi_rd   (pcpi_macc_rd   ),
+			.pcpi_wait (pcpi_macc_wait ),
+			.pcpi_ready(pcpi_macc_ready)
+		);
+	end else begin
+		assign pcpi_macc_wr = 0;
+		assign pcpi_macc_rd = 32'bx;
+		assign pcpi_macc_wait = 0;
+		assign pcpi_macc_ready = 0;
+	end endgenerate
+
+
+
 	always @* begin
 		pcpi_int_wr = 0;
 		pcpi_int_rd = 32'bx;
-		pcpi_int_wait  = |{ENABLE_PCPI && pcpi_wait,  (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_wait,  ENABLE_DIV && pcpi_div_wait};
-		pcpi_int_ready = |{ENABLE_PCPI && pcpi_ready, (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_ready, ENABLE_DIV && pcpi_div_ready};
+		pcpi_int_wait  = |{ENABLE_PCPI && pcpi_wait,  (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_wait,  ENABLE_DIV && pcpi_div_wait,  ENABLE_MACC && pcpi_macc_wait};
+		pcpi_int_ready = |{ENABLE_PCPI && pcpi_ready, (ENABLE_MUL || ENABLE_FAST_MUL) && pcpi_mul_ready, ENABLE_DIV && pcpi_div_ready, ENABLE_MACC && pcpi_macc_ready};
 
 		(* parallel_case *)
 		case (1'b1)
@@ -341,6 +371,10 @@ module picorv32 #(
 			ENABLE_DIV && pcpi_div_ready: begin
 				pcpi_int_wr = pcpi_div_wr;
 				pcpi_int_rd = pcpi_div_rd;
+			end
+			ENABLE_MACC && pcpi_macc_ready: begin
+				pcpi_int_wr = pcpi_macc_wr;
+				pcpi_int_rd = pcpi_macc_rd;
 			end
 		endcase
 	end
@@ -2531,6 +2565,7 @@ module picorv32_axi #(
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 0,
 	parameter [ 0:0] ENABLE_IRQ = 0,
+	parameter [ 0:0] ENABLE_MAC = 0, #MAC operations added for benchmarking
 	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
 	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
 	parameter [ 0:0] ENABLE_TRACE = 0,
@@ -2661,6 +2696,7 @@ module picorv32_axi #(
 		.ENABLE_MUL          (ENABLE_MUL          ),
 		.ENABLE_FAST_MUL     (ENABLE_FAST_MUL     ),
 		.ENABLE_DIV          (ENABLE_DIV          ),
+		.ENABLE_MACC         (ENABLE_MACC         ),
 		.ENABLE_IRQ          (ENABLE_IRQ          ),
 		.ENABLE_IRQ_QREGS    (ENABLE_IRQ_QREGS    ),
 		.ENABLE_IRQ_TIMER    (ENABLE_IRQ_TIMER    ),
@@ -2828,6 +2864,7 @@ module picorv32_wb #(
 	parameter [ 0:0] ENABLE_MUL = 0,
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 0,
+	parameter [ 0:0] ENABLE_MACC = 0,
 	parameter [ 0:0] ENABLE_IRQ = 0,
 	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
 	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
@@ -3044,6 +3081,60 @@ module picorv32_wb #(
 				default:
 					state <= IDLE;
 			endcase
+		end
+	end
+endmodule
+
+ //picorv32_pcpi_macc
+ //Single-cycle multiply: rd = rs1 * rs2
+ //Custom opcode: custom-1 (0101011), funct3=000, funct7=0000000
+ 
+module picorv32_pcpi_macc (
+	input clk, resetn,
+	input             pcpi_valid,
+	input      [31:0] pcpi_insn,
+	input      [31:0] pcpi_rs1,
+	input      [31:0] pcpi_rs2,
+	output reg        pcpi_wr,
+	output reg [31:0] pcpi_rd,
+	output reg        pcpi_wait,
+	output reg        pcpi_ready
+);
+	wire instr_macc = pcpi_valid && resetn &&
+		pcpi_insn[6:0]   == 7'b0101011 &&
+		pcpi_insn[14:12] == 3'b000     &&
+		pcpi_insn[31:25] == 7'b0000000;
+
+	reg [1:0] active;
+	reg [31:0] rs1_q, rs2_q;
+	reg [31:0] mul_result;
+
+	always @(posedge clk) begin
+		pcpi_wr    <= 0;
+		pcpi_ready <= 0;
+		pcpi_wait  <= instr_macc;
+
+		if (!resetn) begin
+			active <= 0;
+		end else begin
+			if (instr_macc && !active[0]) begin
+				rs1_q     <= pcpi_rs1;
+				rs2_q     <= pcpi_rs2;
+				active[0] <= 1;
+			end else begin
+				active[0] <= 0;
+			end
+
+			active[1] <= active[0];
+			if (active[0])
+				mul_result <= pcpi_rs1 * pcpi_rs2;
+
+			if (active[1]) begin
+				pcpi_wr    <= 1;
+				pcpi_ready <= 1;
+				pcpi_rd    <= mul_result;
+				active     <= 0;
+			end
 		end
 	end
 endmodule
