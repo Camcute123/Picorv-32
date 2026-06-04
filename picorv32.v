@@ -2962,6 +2962,7 @@ module picorv32_wb #(
 		.ENABLE_MUL          (ENABLE_MUL          ),
 		.ENABLE_FAST_MUL     (ENABLE_FAST_MUL     ),
 		.ENABLE_DIV          (ENABLE_DIV          ),
+		.ENABLE_MACC         (ENABLE_MACC         ),
 		.ENABLE_IRQ          (ENABLE_IRQ          ),
 		.ENABLE_IRQ_QREGS    (ENABLE_IRQ_QREGS    ),
 		.ENABLE_IRQ_TIMER    (ENABLE_IRQ_TIMER    ),
