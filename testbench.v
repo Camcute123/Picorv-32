@@ -20,6 +20,10 @@
 `ifndef TC_ALU
 `define TC_ALU 0
 `endif
+//macc
+`ifndef MACC
+`define MACC 0
+`endif
 
 
 `ifndef VERILATOR
@@ -184,7 +188,7 @@ module picorv32_wrapper #(
 		.COMPRESSED_ISA(1),
 `endif
 		.ENABLE_MUL(1),
-		.ENABLE_MACC(0), //MAC operations added for benchmarking
+		.ENABLE_MACC(`MACC), //MAC operations added for benchmarking
 		.BARREL_SHIFTER(`BARREL), //added
 		.ENABLE_DIV(1),
 		.ENABLE_IRQ(1),
