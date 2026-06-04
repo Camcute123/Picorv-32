@@ -40,4 +40,7 @@ void multest(void);
 // stats.c
 void stats(void);
 
+// matmul.c
+void matmul(void);
+
 #endif
