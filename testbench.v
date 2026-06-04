@@ -16,6 +16,10 @@
 `define TWO_CYCLE_ALU 0
 `endif
 //
+//alumacc
+`ifndef TC_ALU
+`define TC_ALU 0
+`endif
 
 
 `ifndef VERILATOR
