@@ -113,7 +113,7 @@ firmware/firmware.elf: $(FIRMWARE_OBJS) $(TEST_OBJS) firmware/sections.lds
 	chmod -x $@
 
 firmware/matmul.o: firmware/matmul.c
-	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32im -Os -ffreestanding -nostdlib -o $@ $
+	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32im -Os -ffreestanding -nostdlib -o $@ $<
 
 firmware/start.o: firmware/start.S
 	$(TOOLCHAIN_PREFIX)gcc -c -mabi=ilp32 -march=rv32im$(subst C,c,$(COMPRESSED_ISA)) -o $@ $<
