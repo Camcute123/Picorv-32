@@ -2565,7 +2565,7 @@ module picorv32_axi #(
 	parameter [ 0:0] ENABLE_FAST_MUL = 0,
 	parameter [ 0:0] ENABLE_DIV = 0,
 	parameter [ 0:0] ENABLE_IRQ = 0,
-	parameter [ 0:0] ENABLE_MAC = 0, #MAC operations added for benchmarking
+	parameter [ 0:0] ENABLE_MAC = 0, //MAC operations added for benchmarking
 	parameter [ 0:0] ENABLE_IRQ_QREGS = 1,
 	parameter [ 0:0] ENABLE_IRQ_TIMER = 1,
 	parameter [ 0:0] ENABLE_TRACE = 0,
