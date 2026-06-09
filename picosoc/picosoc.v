@@ -158,6 +158,7 @@ module picosoc (
 		.ENABLE_FAST_MUL(ENABLE_FAST_MUL),
 		.ENABLE_MACC(ENABLE_MACC),
 		.ENABLE_IRQ(1),
+		.TWO_CYCLE_ALU(TWO_CYCLE_ALU),
 		.ENABLE_IRQ_QREGS(ENABLE_IRQ_QREGS)
 	) cpu (
 		.clk         (clk        ),
