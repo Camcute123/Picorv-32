@@ -22,7 +22,15 @@
 `endif
 
 `define PICOSOC_MEM ice40up5k_spram
-
+`ifndef BARREL
+`define BARREL 1
+`endif
+`ifndef TC_ALU
+`define TC_ALU 0
+`endif
+`ifndef MACC
+`define MACC 1
+`endif
 module icebreaker (
 	input clk,
 
@@ -128,10 +136,12 @@ module icebreaker (
 	end
 
 	picosoc #(
-		.BARREL_SHIFTER(1), // enable the barrel shifter
-		.ENABLE_MUL(1), // enable the multiplier
-		.ENABLE_DIV(0),
-		.ENABLE_FAST_MUL(1),
+		.BARREL_SHIFTER(`BARREL), //barrel shifter enabled
+		.ENABLE_MUL(1),
+		.ENABLE_DIV(1),
+		.ENABLE_FAST_MUL(0),
+		.ENABLE_MACC(`MACC), //macc enabled
+		.TWO_CYCLE_ALU(`TC_ALU), //2 cycle alu
 		.MEM_WORDS(MEM_WORDS)
 	) soc (
 		.clk          (clk_16mhz   ),

@@ -76,6 +76,8 @@ module picosoc (
 	parameter [0:0] ENABLE_COMPRESSED = 1;
 	parameter [0:0] ENABLE_COUNTERS = 1;
 	parameter [0:0] ENABLE_IRQ_QREGS = 0;
+	parameter [0:0] ENABLE_MACC = 0;
+	parameter [0:0] TWO_CYCLE_ALU = 0;
 
 	parameter integer MEM_WORDS = 256;
 	parameter [31:0] STACKADDR = (4*MEM_WORDS);       // end of memory
@@ -154,6 +156,7 @@ module picosoc (
 		.ENABLE_MUL(ENABLE_MUL),
 		.ENABLE_DIV(ENABLE_DIV),
 		.ENABLE_FAST_MUL(ENABLE_FAST_MUL),
+		.ENABLE_MACC(ENABLE_MACC),
 		.ENABLE_IRQ(1),
 		.ENABLE_IRQ_QREGS(ENABLE_IRQ_QREGS)
 	) cpu (

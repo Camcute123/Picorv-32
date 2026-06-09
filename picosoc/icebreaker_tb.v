@@ -33,7 +33,7 @@ module testbench;
 	event ser_sample;
 
 
-	// Count read-buffer hits vs misses on the SoC clock to measure how often the read buffer serves a read instantly instead of going to RAM.
+	// Count read-buffer hits vs misses on the SoC clock to measure how often the read buffer serves a read instantly instead of going to RAM
 	integer readbuf_hits  = 0;
 	integer ram_read_miss = 0;
 
