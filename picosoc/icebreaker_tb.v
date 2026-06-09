@@ -67,7 +67,7 @@ module testbench;
 	wire flash_io2;
 	wire flash_io3;
 
-	integer cyc = 0, edges = 0, start_cyc = 0, start_hits = 0, start_miss = 0;
+	integer cyc = 0, edges = 0, start_cyc = 0, start_hits = 0, start_miss = 0; reg [63:0] start_instr = 0;
 	reg led1_d = 1'b0;
 
 	always @(posedge clk) begin
@@ -78,14 +78,26 @@ module testbench;
 				if (edges == 0) begin
 					start_cyc <= cyc; start_hits <= readbuf_hits;
 					start_miss <= ram_read_miss; edges <= 1;
+					start_instr <= uut.soc.cpu.count_instr;
 				end else if (edges == 1) begin
-					$display("cycles for one pass: %0d", cyc - start_cyc);
-					$display("read-buffer hits: %0d", readbuf_hits - start_hits);
-					$display("RAM read misses: %0d", ram_read_miss - start_miss);
-					if ((readbuf_hits-start_hits)+(ram_read_miss-start_miss) > 0)
-						$display("hit rate: %0d%%", (100*(readbuf_hits-start_hits))/((readbuf_hits-start_hits)+(ram_read_miss-start_miss)));
-					$finish;
-				end
+    begin:report
+        integer c, n,cpi_int,cpi_frac;
+        c = cyc -start_cyc;
+        n = uut.soc.cpu.count_instr- start_instr;
+        cpi_int  = c / ;
+        cpi_frac = (c -cpi_int*n) * 100/n;
+        $display("cycles: %0d",c);
+        $display("instructions: %0d",n);
+        $display("CPI: %0d.%02d",cpi_int,cpi_frac);
+        $display("hits: %0d",readbuf_hits-start_hits);
+        $display("misses: %0d",ram_read_miss-start_miss);
+        if ((readbuf_hits-start_hits)+(ram_read_miss-start_miss) > 0)
+            $display("hit rate: %0d%%",
+                (100*(readbuf_hits-start_hits))/
+                ((readbuf_hits-start_hits)+(ram_read_miss-start_miss)));
+    end
+    $finish;
+end
 			end
 		end
 	end
