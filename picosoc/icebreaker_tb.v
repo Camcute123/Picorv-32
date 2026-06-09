@@ -84,7 +84,7 @@ module testbench;
         integer c, n,cpi_int,cpi_frac;
         c = cyc -start_cyc;
         n = uut.soc.cpu.count_instr- start_instr;
-        cpi_int  = c / ;
+        cpi_int  = c/ n;
         cpi_frac = (c -cpi_int*n) * 100/n;
         $display("cycles: %0d",c);
         $display("instructions: %0d",n);
