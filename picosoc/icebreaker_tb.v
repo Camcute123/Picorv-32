@@ -23,12 +23,7 @@ module testbench;
 	reg clk;
 	always #5 clk = (clk === 1'b0);
 
-	// --- Simulation-only PLL bypass (does not modify icebreaker.v) ---
-	// On real hardware icebreaker.v uses SB_PLL40_CORE to make clk_16mhz.
-	// In simulation that primitive has an empty body, so clk_16mhz and
-	// pll_locked are never driven and the whole SoC stays frozen. We force
-	// them here from the testbench: drive the SoC clock from clk and hold
-	// the PLL "locked" so reset can release. This only affects simulation.
+//PLL bypass (ignore)
 	initial begin
 		force uut.clk_16mhz  = clk;
 		force uut.pll_locked = 1'b1;
@@ -54,26 +49,8 @@ module testbench;
 		$dumpfile("testbench.vcd");
 		$dumpvars(0, testbench);
 
-		repeat (6) begin
-			repeat (50000) @(posedge clk);
-			$display("+50000 cycles");
 		end
 
-	//ouputs
-		$display("READ BUFFER");
-		$display("read-buffer hits : %0d", readbuf_hits);
-		$display("RAM read misses  : %0d", ram_read_miss);
-		$display("total RAM reads  : %0d", readbuf_hits + ram_read_miss);
-		if (readbuf_hits + ram_read_miss > 0)
-			$display("hit rate         : %0d %%", (100*readbuf_hits)/(readbuf_hits + ram_read_miss));
-		$finish;
-	end
-
-	integer cycle_cnt = 0;
-
-	always @(posedge clk) begin
-		cycle_cnt <= cycle_cnt + 1;
-	end
 
 	wire led1, led2, led3, led4, led5;
 	wire ledr_n, ledg_n;
@@ -90,9 +67,31 @@ module testbench;
 	wire flash_io2;
 	wire flash_io3;
 
-	always @(leds) begin
-		#1 $display("%b", leds);
+	integer cyc = 0, edges = 0, start_cyc = 0, start_hits = 0, start_miss = 0;
+	reg led1_d = 1'b0;
+
+	always @(posedge clk) begin
+		led1_d <= led1;
+		if (uut.resetn) begin
+			cyc <= cyc + 1;
+			if (led1 !== led1_d) begin
+				if (edges == 0) begin
+					start_cyc <= cyc; start_hits <= readbuf_hits;
+					start_miss <= ram_read_miss; edges <= 1;
+				end else if (edges == 1) begin
+					$display("cycles for one pass: %0d", cyc - start_cyc);
+					$display("read-buffer hits: %0d", readbuf_hits - start_hits);
+					$display("RAM read misses: %0d", ram_read_miss - start_miss);
+					if ((readbuf_hits-start_hits)+(ram_read_miss-start_miss) > 0)
+						$display("hit rate: %0d%%", (100*(readbuf_hits-start_hits))/((readbuf_hits-start_hits)+(ram_read_miss-start_miss)));
+					$finish;
+				end
+			end
+		end
 	end
+
+	always @(posedge clk)
+		if (cyc > 30000000) $finish;
 
 	icebreaker #(
 		// We limit the amount of memory in simulation
