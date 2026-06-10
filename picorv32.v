@@ -3087,9 +3087,6 @@ module picorv32_wb #(
 endmodule
 
  //picorv32_pcpi_macc
- //Single-cycle multiply: rd = rs1 * rs2
- //Custom opcode: custom-1 (0101011), funct3=000, funct7=0000000
- 
 module picorv32_pcpi_macc (
 	input clk, resetn,
 	input             pcpi_valid,

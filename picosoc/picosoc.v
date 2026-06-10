@@ -110,12 +110,11 @@ module picosoc (
 
 	reg ram_ready;
 	wire [31:0] ram_rdata;
-	// Adding a read buffer register
-	reg        readbuf_valid; // any valid data in buffer
-	////////////////////////////////////////////////
-	reg [31:0] readbuf_addr; //from which memory address
-	reg [31:0] readbuf_data; //the data from the lastRAM
-	////////////////////////////////////////////////
+
+	reg        readbuf_valid;
+	reg [31:0] readbuf_addr;
+	reg [31:0] readbuf_data;
+
 
 	//hit detection
 	wire readbuf_hit = readbuf_valid && mem_valid && (mem_wstrb == 4'b0000) && (mem_addr == readbuf_addr);
@@ -135,16 +134,13 @@ module picosoc (
 	wire        simpleuart_reg_dat_sel = mem_valid && (mem_addr == 32'h 0200_0008);
 	wire [31:0] simpleuart_reg_dat_do;
 	wire        simpleuart_reg_dat_wait;
-	////////////////////////////////////////////////
-	// Original: be ready when RAM/Flash/UART/GPIO complete --> readbuf_hit when read buffer is hitten, memory access is completed 
-	// so CPU do not have to wait for ram_ready
+
 	assign mem_ready = readbuf_hit || (iomem_valid && iomem_ready) || spimem_ready || ram_ready || spimemio_cfgreg_sel ||
 			simpleuart_reg_div_sel || (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
-	// mem_rdata is the final data CPU got. If buffer hit, give the data in buffer firectly to CPU
 	assign mem_rdata = readbuf_hit ? readbuf_data : (iomem_valid && iomem_ready) ? iomem_rdata : spimem_ready ? spimem_rdata : ram_ready ? ram_rdata :
 			spimemio_cfgreg_sel ? spimemio_cfgreg_do : simpleuart_reg_div_sel ? simpleuart_reg_div_do :
 			simpleuart_reg_dat_sel ? simpleuart_reg_dat_do : 32'h 0000_0000;
-	////////////////////////////////////////////////
+
 
 	picorv32 #(
 		.STACKADDR(STACKADDR),
@@ -221,7 +217,7 @@ module picosoc (
 		.reg_dat_do  (simpleuart_reg_dat_do),
 		.reg_dat_wait(simpleuart_reg_dat_wait)
 	);
-	////////////////////////////////////////////////
+
 	// Useful if read the same address continuously 
 	always @(posedge clk) begin
 		if (!resetn) begin
@@ -232,19 +228,18 @@ module picosoc (
         	readbuf_data <= 0;
 		end else begin
 			ram_ready <= mem_valid && !mem_ready && mem_addr < 4*MEM_WORDS;
-			// RAM read --> store the data into buffer
+			// RAM read
 			if (ram_ready && mem_wstrb == 4'b0000) begin
 				readbuf_valid <= 1;
-				readbuf_addr <= mem_addr; // save current address
-				readbuf_data <= ram_rdata; // save current data
+				readbuf_addr <= mem_addr;
+				readbuf_data <= ram_rdata;
 			end
-			// is write is triggered
 			if (mem_valid && mem_wstrb != 4'b0000) begin
 				readbuf_valid <= 0;
 			end
 		end
 	end
-	///////////////////////////////////////////////////
+
 
 	`PICOSOC_MEM #(
 		.WORDS(MEM_WORDS)
@@ -259,7 +254,6 @@ endmodule
 
 // Implementation note:
 // Replace the following two modules with wrappers for your SRAM cells.
-
 module picosoc_regs (
 	input clk, wen,
 	input [5:0] waddr,
